@@ -39,15 +39,26 @@ class HandleInertiaRequests extends Middleware
                     }
                     return $user;
                 },
-                'permissions' => fn () => $request->user() ? [
-                    'manage_students' => $request->user()->can('create', \App\Models\Tenant\Student::class),
-                    'manage_teachers' => $request->user()->can('create', \App\Models\Tenant\Teacher::class),
-                    'manage_grades' => $request->user()->can('create', \App\Models\Tenant\Grade::class),
-                    'view_all_students' => $request->user()->can('viewAny', \App\Models\Tenant\Student::class),
-                    'manage_classes' => $request->user()->isSchoolAdmin(),
-                    'manage_subjects' => $request->user()->isSchoolAdmin(),
-                    'manage_assignments' => $request->user()->isSchoolAdmin(),
-                ] : [],
+                'permissions' => function () use ($request) {
+                    $user = $request->user();
+                    
+                    // Only check School Permissions if the user is a Tenant User (Teacher/Student/School Admin)
+                    // This prevents "TypeError: Argument #1 must be of type App\Models\Tenant\User"
+                    // when a Central Admin (App\Models\User) accesses the dashboard.
+                    if (! $user instanceof \App\Models\Tenant\User) {
+                        return [];
+                    }
+
+                    return [
+                        'manage_students' => $user->can('create', \App\Models\Tenant\Student::class),
+                        'manage_teachers' => $user->can('create', \App\Models\Tenant\Teacher::class),
+                        'manage_grades' => $user->can('create', \App\Models\Tenant\Grade::class),
+                        'view_all_students' => $user->can('viewAny', \App\Models\Tenant\Student::class),
+                        'manage_classes' => $user->isSchoolAdmin(),
+                        'manage_subjects' => $user->isSchoolAdmin(),
+                        'manage_assignments' => $user->isSchoolAdmin(),
+                    ];
+                },
             ],
             'tenant' => fn () => $request->attributes->get('tenant') ?? (app()->bound('currentTenant') ? app('currentTenant') : null),
             'subscription' => fn () => $request->attributes->get('subscription'),

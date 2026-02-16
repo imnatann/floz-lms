@@ -3,6 +3,7 @@ import TenantLayout from '@/Layouts/TenantLayout.vue';
 import Card from '@/Components/UI/Card.vue';
 import Button from '@/Components/UI/Button.vue';
 import Badge from '@/Components/UI/Badge.vue';
+import DashboardAnnouncementWidget from '@/Components/UI/DashboardAnnouncementWidget.vue';
 import { Link } from '@inertiajs/vue3';
 
 defineOptions({ layout: TenantLayout });
@@ -11,6 +12,7 @@ const props = defineProps({
   student: Object,
   stats: Object,
   recentAnnouncements: Array,
+  todaysSchedules: Array,
 });
 
 const formatDate = (dateString) => {
@@ -70,38 +72,42 @@ const greeting = () => {
           </div>
         </div>
 
-        <!-- Today's Schedule (Placeholder) -->
+        <!-- Today's Schedule -->
         <Card title="Jadwal Hari Ini" subtitle="Mata pelajaran yang harus diikuti">
-           <div class="flex flex-col items-center justify-center py-8 text-center">
-              <span class="text-4xl">📅</span>
-              <p class="mt-2 text-sm font-medium text-slate-500">Jadwal pelajaran belum tersedia</p>
+           <div v-if="todaysSchedules && todaysSchedules.length > 0" class="space-y-3">
+              <div 
+                v-for="schedule in todaysSchedules" 
+                :key="schedule.id"
+                class="flex items-center justify-between border-2 border-slate-900 bg-white p-3 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] transition-transform hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(15,23,42,1)]"
+              >
+                 <div class="flex items-center gap-3">
+                    <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center border-2 border-slate-900 bg-orange-100 font-bold text-slate-900">
+                        {{ schedule.start_time.substring(0, 5) }}
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-slate-900 leading-tight">{{ schedule.teaching_assignment.subject.name }}</h4>
+                        <p class="text-xs font-mono text-slate-600">{{ schedule.teaching_assignment.teacher.name }}</p>
+                    </div>
+                 </div>
+                 <div class="hidden sm:block">
+                    <Badge variant="outline" class="border-slate-900 text-slate-900 font-mono text-xs rounded-none">
+                        {{ schedule.start_time.substring(0, 5) }} - {{ schedule.end_time.substring(0, 5) }}
+                    </Badge>
+                 </div>
+              </div>
+           </div>
+           
+           <div v-else class="flex flex-col items-center justify-center py-8 text-center rounded border-2 border-dashed border-slate-300">
+              <span class="text-4xl opacity-50">🏖️</span>
+              <p class="mt-2 text-sm font-bold text-slate-900">Tidak ada jadwal hari ini</p>
+              <p class="text-xs text-slate-500">Selamat beristirahat!</p>
            </div>
         </Card>
       </div>
 
       <!-- Right Column: Announcements -->
       <div class="lg:col-span-1">
-        <Card title="Pengumuman Sekolah" class="h-full">
-          <div class="space-y-4">
-            <div 
-              v-for="announcement in recentAnnouncements" 
-              :key="announcement.id"
-              class="relative border-l-2 border-orange-500 pl-4 py-1"
-            >
-              <div class="text-xs text-slate-400">{{ formatDate(announcement.created_at) }}</div>
-              <h4 class="text-sm font-semibold text-slate-800 line-clamp-1">{{ announcement.title }}</h4>
-              <p class="mt-0.5 line-clamp-2 text-xs text-slate-500">{{ announcement.content }}</p>
-            </div>
-            <div v-if="!recentAnnouncements?.length" class="py-8 text-center">
-              <p class="text-sm text-slate-400">Tidak ada pengumuman baru.</p>
-            </div>
-          </div>
-           <div class="mt-6 border-t border-slate-100 pt-4">
-             <Link href="/tenant/announcements" class="block text-center text-sm font-medium text-orange-600 hover:text-orange-700">
-              Lihat Semua →
-            </Link>
-          </div>
-        </Card>
+        <DashboardAnnouncementWidget :announcements="recentAnnouncements" />
       </div>
     </div>
   </div>

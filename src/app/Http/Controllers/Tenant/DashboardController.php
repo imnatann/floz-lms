@@ -64,6 +64,10 @@ class DashboardController extends Controller
         // Role-based Dashboard Logic
         $user = auth()->user();
 
+        // Get today's day of week (1=Monday, 7=Sunday)
+        // Carbon::dayOfWeek returns 0 for Sunday, so we map it to 1-7 (Mon-Sun) to match DB
+        $dayOfWeek = $today->dayOfWeekIso; 
+
         if ($user->isStudent()) {
             $student = $user->student()->with(['class.homeroomTeacher'])->first();
             
@@ -74,6 +78,7 @@ class DashboardController extends Controller
                         'attendance_percentage' => 0,
                     ],
                     'recentAnnouncements' => $recentAnnouncements,
+                    'todaysSchedules' => [],
                 ]);
             }
             
@@ -84,13 +89,25 @@ class DashboardController extends Controller
 
             $studentStats = [
                 'attendance_percentage' => $attendancePercentage,
-                // 'assignments_pending' => ...
             ];
+
+            // Fetch Today's Schedule for Student's Class
+            $todaysSchedules = [];
+            if ($student->class_id) {
+                $todaysSchedules = \App\Models\Tenant\Schedule::where('day_of_week', $dayOfWeek)
+                    ->whereHas('teachingAssignment', function ($q) use ($student) {
+                        $q->where('class_id', $student->class_id);
+                    })
+                    ->with(['teachingAssignment.subject', 'teachingAssignment.teacher'])
+                    ->orderBy('start_time')
+                    ->get();
+            }
 
             return Inertia::render('Tenant/Dashboard/StudentDashboard', [
                 'student' => $student,
                 'stats' => $studentStats,
                 'recentAnnouncements' => $recentAnnouncements,
+                'todaysSchedules' => $todaysSchedules,
             ]);
         }
 
@@ -105,11 +122,11 @@ class DashboardController extends Controller
                         'my_students_count'  => 0,
                     ],
                     'recentAnnouncements' => $recentAnnouncements,
+                    'todaysSchedules' => [],
                 ]);
             }
 
             // Teacher Stats
-            // Get classes where teacher is homeroom OR has a teaching assignment
             $classIds = TeachingAssignment::where('teacher_id', $teacher->id)->pluck('class_id')
                 ->merge(SchoolClass::where('homeroom_teacher_id', $teacher->id)->pluck('id'))
                 ->unique();
@@ -119,10 +136,20 @@ class DashboardController extends Controller
                 'my_students_count'  => Student::whereIn('class_id', $classIds)->active()->count(),
             ];
 
+            // Fetch Today's Teaching Schedule
+            $todaysSchedules = \App\Models\Tenant\Schedule::where('day_of_week', $dayOfWeek)
+                ->whereHas('teachingAssignment', function ($q) use ($teacher) {
+                    $q->where('teacher_id', $teacher->id);
+                })
+                ->with(['teachingAssignment.subject', 'teachingAssignment.schoolClass'])
+                ->orderBy('start_time')
+                ->get();
+
             return Inertia::render('Tenant/Dashboard/TeacherDashboard', [
                 'teacher' => $teacher,
                 'stats' => $teacherStats,
                 'recentAnnouncements' => $recentAnnouncements,
+                'todaysSchedules' => $todaysSchedules,
             ]);
         }
 

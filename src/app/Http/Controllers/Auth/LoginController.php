@@ -100,4 +100,93 @@ class LoginController extends Controller
 
         return redirect('/');
     }
+    #[OA\Get(
+        path: "/api/tenants/search",
+        tags: ["Auth"],
+        summary: "Search Tenants",
+        description: "Search for tenants by name or domain"
+    )]
+    #[OA\Parameter(
+        name: "q",
+        in: "query",
+        required: true,
+        schema: new OA\Schema(type: "string")
+    )]
+    #[OA\Response(
+        response: 200,
+        description: "List of tenants",
+        content: new OA\JsonContent(
+            type: "array",
+            items: new OA\Items(
+                properties: [
+                    new OA\Property(property: "id", type: "string"),
+                    new OA\Property(property: "name", type: "string"),
+                    new OA\Property(property: "domain", type: "string"),
+                    new OA\Property(property: "url", type: "string"),
+                    new OA\Property(property: "logo_url", type: "string", nullable: true),
+                ]
+            )
+        )
+    )]
+    public function searchTenants(Request $request)
+    {
+        $query = $request->input('q');
+
+        if (strlen($query) < 3) {
+            return response()->json([]);
+        }
+
+        // explicit start query
+        $queryBuilder = \App\Models\Central\Tenant::query();
+
+        // Add search conditions using whereRaw for maximum compatibility
+        $term = strtolower($query);
+        $queryBuilder->where(function ($q) use ($term) {
+             $q->whereRaw("LOWER(name) LIKE ?", ["%{$term}%"])
+               ->orWhereRaw("LOWER(slug) LIKE ?", ["%{$term}%"])
+               ->orWhereRaw("LOWER(domain) LIKE ?", ["%{$term}%"]);
+        });
+
+        // We don't enforce whereNotNull('domain') anymore because we can use slug
+        
+        $tenants = $queryBuilder->select(['id', 'name', 'slug', 'domain', 'logo_url'])
+            ->limit(10)
+            ->get();
+        
+        $results = $tenants->map(function ($tenant) {
+                 $request = request();
+                 $protocol = $request->secure() ? 'https://' : 'http://';
+                 $host = $request->getHost();
+                 $port = $request->getPort();
+                 $portSuffix = ($port && !in_array($port, [80, 443])) ? ':' . $port : '';
+
+                 // Use domain if available, otherwise fallback to slug
+                 $domainOrSlug = $tenant->domain ?? $tenant->slug;
+                 
+                 // Logic to determine full domain
+                 $fullDomain = $domainOrSlug;
+
+                 // If it's a slug (no dots), append central domain/localhost
+                 if (!str_contains($domainOrSlug, '.')) {
+                     if ($host === 'localhost') {
+                         $fullDomain = $domainOrSlug . '.localhost';
+                     } else {
+                         $central = config('tenancy.central_domain');
+                         if ($central && $central !== 'localhost') {
+                              $fullDomain = $domainOrSlug . '.' . $central;
+                         }
+                     }
+                 }
+
+                 return [
+                    'id' => $tenant->id,
+                    'name' => $tenant->name,
+                    'domain' => $domainOrSlug, // Display slug/domain
+                    'url' => $protocol . $fullDomain . $portSuffix . '/login',
+                    'logo_url' => $tenant->logo_url,
+                 ];
+            });
+
+        return response()->json($results);
+    }
 }

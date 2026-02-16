@@ -37,4 +37,9 @@ class TeachingAssignment extends Model
     {
         return $this->belongsTo(AcademicYear::class);
     }
+
+    public function schedules()
+    {
+        return $this->hasMany(Schedule::class);
+    }
 }

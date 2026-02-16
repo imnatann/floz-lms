@@ -61,7 +61,8 @@ const maxWidthClass = computed(() => {
 <template>
     <Teleport to="body">
         <Transition leave-active-class="duration-200">
-            <div v-show="show" class="fixed inset-0 overflow-y-auto px-4 py-6 sm:px-0 z-50" scroll-region>
+            <div v-show="show" class="fixed inset-0 overflow-y-auto px-4 py-6 sm:px-0 z-[100]" scroll-region>
+                <!-- Backdrop -->
                 <Transition
                     enter-active-class="ease-out duration-300"
                     enter-from-class="opacity-0"
@@ -70,11 +71,12 @@ const maxWidthClass = computed(() => {
                     leave-from-class="opacity-100"
                     leave-to-class="opacity-0"
                 >
-                    <div v-show="show" class="fixed inset-0 transform transition-all" @click="close">
-                        <div class="absolute inset-0 bg-slate-900/75 backdrop-blur-sm" />
+                    <div v-show="show" class="fixed inset-0 transform transition-all z-0" @click="close">
+                        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" />
                     </div>
                 </Transition>
 
+                <!-- Model Content -->
                 <Transition
                     enter-active-class="ease-out duration-300"
                     enter-from-class="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
@@ -85,7 +87,7 @@ const maxWidthClass = computed(() => {
                 >
                     <div
                         v-show="show"
-                        class="mb-6 bg-white rounded-xl overflow-hidden shadow-xl transform transition-all sm:w-full sm:mx-auto"
+                        class="mb-6 bg-white border-2 border-slate-900 shadow-[8px_8px_0px_0px_#0f172a] transform transition-all sm:w-full sm:mx-auto p-1 opacity-100 relative z-10"
                         :class="maxWidthClass"
                     >
                         <slot v-if="show" />

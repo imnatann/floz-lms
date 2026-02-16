@@ -31,6 +31,7 @@ Route::controller(LoginController::class)->group(function () {
     Route::get('/login', 'showLoginForm')->name('login');
     Route::post('/login', 'login');
     Route::post('/logout', 'logout')->name('logout');
+    Route::get('/api/tenants/search', 'searchTenants')->name('tenants.search');
 });
 
 // ─── Platform Routes (admin.floz.id) ────────────────────────────────
@@ -87,6 +88,9 @@ Route::prefix('tenant')
 
         // Teaching Assignments (Penugasan Guru)
         Route::resource('teaching-assignments', TeachingAssignmentController::class)->except(['show']);
+
+        // Schedules (Jadwal Pelajaran)
+        Route::resource('schedules', \App\Http\Controllers\Tenant\ScheduleController::class)->only(['index', 'store', 'destroy']);
 
         // Attendance
         Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');

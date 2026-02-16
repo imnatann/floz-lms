@@ -1,6 +1,7 @@
 <script setup>
 import { useForm, Head, Link } from '@inertiajs/vue3';
 import TenantLayout from '@/Layouts/TenantLayout.vue';
+import { computed, watch } from 'vue';
 
 defineOptions({ layout: TenantLayout });
 
@@ -19,6 +20,42 @@ const form = useForm({
   category: props.subject?.category || 'general',
   description: props.subject?.description || '',
   status: props.subject?.status || 'active',
+});
+
+const gradeOptions = computed(() => {
+  switch (form.education_level) {
+    case 'SD':
+      return [
+        { value: 1, label: 'Kelas 1' },
+        { value: 2, label: 'Kelas 2' },
+        { value: 3, label: 'Kelas 3' },
+        { value: 4, label: 'Kelas 4' },
+        { value: 5, label: 'Kelas 5' },
+        { value: 6, label: 'Kelas 6' },
+      ];
+    case 'SMP':
+      return [
+        { value: 7, label: 'Kelas 7 (VII)' },
+        { value: 8, label: 'Kelas 8 (VIII)' },
+        { value: 9, label: 'Kelas 9 (IX)' },
+      ];
+    case 'SMA':
+      return [
+        { value: 10, label: 'Kelas 10 (X)' },
+        { value: 11, label: 'Kelas 11 (XI)' },
+        { value: 12, label: 'Kelas 12 (XII)' },
+      ];
+    default:
+      return [];
+  }
+});
+
+// Reset grade level when education level changes, but only if it doesn't match the new options
+watch(() => form.education_level, (newLevel) => {
+  const validGrades = gradeOptions.value.map(o => o.value);
+  if (!validGrades.includes(form.grade_level)) {
+    form.grade_level = validGrades[0] || '';
+  }
 });
 
 const submit = () => {
@@ -77,7 +114,9 @@ const submit = () => {
           <label class="mb-1.5 block text-xs font-medium text-slate-600">Kelas (opsional)</label>
           <select v-model="form.grade_level" class="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/20">
             <option value="">Semua kelas</option>
-            <option v-for="n in 12" :key="n" :value="n">Kelas {{ n }}</option>
+            <option v-for="grade in gradeOptions" :key="grade.value" :value="grade.value">
+              {{ grade.label }}
+            </option>
           </select>
           <p v-if="form.errors.grade_level" class="mt-1 text-xs text-red-500">{{ form.errors.grade_level }}</p>
         </div>
