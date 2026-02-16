@@ -16,7 +16,10 @@ class ScheduleController extends Controller
     {
         // For filtering by class in the admin view
         $classId = $request->input('class_id');
-        $classes = SchoolClass::orderBy('name')->get();
+        $classes = SchoolClass::with('homeroomTeacher')
+            ->withCount(['students', 'teachingAssignments'])
+            ->orderBy('name')
+            ->get();
         
         $schedules = [];
         $selectedClass = null;
@@ -68,14 +71,8 @@ class ScheduleController extends Controller
         ]);
 
         \Illuminate\Support\Facades\DB::transaction(function () use ($validated) {
-            foreach ($validated['items'] as $index => $item) {
-                 // Check for overlaps (simplified for bulk)
-                $assignment = TeachingAssignment::find($item['teaching_assignment_id']);
-                
-                // You might want to move overlap check to a custom rule or service to throw validation error 
-                // mapped to specific index, but for now we proceed.
-                // Or verify overlapping within the request itself (e.g. item 1 overlaps item 2).
-
+            foreach ($validated['items'] as $item) {
+                // Here we could add overlap checking logic if needed
                 Schedule::create([
                     'teaching_assignment_id' => $item['teaching_assignment_id'],
                     'day_of_week' => $validated['day_of_week'],
