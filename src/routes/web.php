@@ -49,6 +49,15 @@ Route::prefix('tenant')
     ->group(function () {
         Route::get('/dashboard', [TenantDashboardController::class, 'index'])->name('dashboard');
 
+        // Notifications
+        // Notifications
+        Route::get('/notifications/data', [\App\Http\Controllers\Tenant\NotificationController::class, 'data'])->name('notifications.data');
+        Route::get('/notifications', [\App\Http\Controllers\Tenant\NotificationController::class, 'index'])->name('notifications.index');
+        Route::post('/notifications/mark-all-read', [\App\Http\Controllers\Tenant\NotificationController::class, 'markAllRead'])->name('notifications.mark-all-read');
+        Route::post('/notifications/{id}/mark-read', [\App\Http\Controllers\Tenant\NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
+        Route::post('/notifications/mark-all-read', [\App\Http\Controllers\Tenant\NotificationController::class, 'markAllRead'])->name('notifications.mark-all-read');
+        Route::post('/notifications/{id}/mark-read', [\App\Http\Controllers\Tenant\NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
+
         // Students
         Route::post('students/import', [StudentController::class, 'import'])->name('students.import');
         Route::get('students/template', [StudentController::class, 'downloadTemplate'])->name('students.template');
@@ -77,7 +86,7 @@ Route::prefix('tenant')
         Route::resource('subjects', SubjectController::class);
 
         // Teaching Assignments (Penugasan Guru)
-        Route::resource('teaching-assignments', TeachingAssignmentController::class)->only(['index', 'store', 'destroy']);
+        Route::resource('teaching-assignments', TeachingAssignmentController::class)->except(['show']);
 
         // Attendance
         Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');

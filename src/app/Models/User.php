@@ -21,6 +21,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
     ];
 
     /**
@@ -43,7 +44,33 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'role' => \App\Enums\UserRole::class,
         ];
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === \App\Enums\UserRole::SuperAdmin;
+    }
+
+    public function isSchoolAdmin(): bool
+    {
+        return $this->role === \App\Enums\UserRole::SchoolAdmin;
+    }
+
+    public function isTeacher(): bool
+    {
+        return $this->role === \App\Enums\UserRole::Teacher;
+    }
+
+    public function isStudent(): bool
+    {
+        return $this->role === \App\Enums\UserRole::Student;
+    }
+
+    public function isParent(): bool
+    {
+        return $this->role === \App\Enums\UserRole::Parent;
     }
 
     public function student()

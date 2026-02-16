@@ -71,7 +71,7 @@ class LoginController extends Controller
             }
 
             // Platform login — only allow admins
-            if ($user->role === 'super_admin' || $user->role === 'platform_admin') {
+            if ($user->isSuperAdmin()) {
                 return redirect()->route('platform.dashboard');
             }
 

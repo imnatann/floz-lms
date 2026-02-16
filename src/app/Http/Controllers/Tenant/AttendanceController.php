@@ -8,6 +8,7 @@ use App\Models\Tenant\SchoolClass;
 use App\Models\Tenant\Student;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use App\Notifications\Tenant\StudentAbsentNotification;
 
 class AttendanceController extends Controller
 {
@@ -62,7 +63,7 @@ class AttendanceController extends Controller
         ]);
 
         foreach ($validated['attendances'] as $data) {
-            Attendance::updateOrCreate(
+            $attendance = Attendance::updateOrCreate(
                 [
                     'student_id' => $data['student_id'],
                     'date' => $validated['date'],
@@ -72,6 +73,16 @@ class AttendanceController extends Controller
                     'notes' => $data['notes'] ?? null,
                 ]
             );
+
+            // Notify if Absent (Alpha)
+            if ($data['status'] === 'absent') {
+                $attendance->load('student.user'); // Ensure relations are loaded
+                if ($attendance->student && $attendance->student->user) {
+                     // Check if notification already sent today? 
+                     // For now, simpler is better. Triggers every time saved as absent.
+                    $attendance->student->user->notify(new StudentAbsentNotification($attendance));
+                }
+            }
         }
 
         return redirect()->back()->with('success', 'Absensi berhasil disimpan.');

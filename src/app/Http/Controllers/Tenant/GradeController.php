@@ -9,6 +9,7 @@ use App\Models\Tenant\Semester;
 use App\Models\Tenant\Student;
 use App\Models\Tenant\Subject;
 use App\Services\GradeCalculationService;
+use App\Notifications\Tenant\GradePostedNotification;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use OpenApi\Attributes as OA;
@@ -154,7 +155,7 @@ class GradeController extends Controller
                 );
             }
 
-            Grade::updateOrCreate(
+            $grade = Grade::updateOrCreate(
                 [
                     'student_id'  => $gradeData['student_id'],
                     'subject_id'  => $validated['subject_id'],
@@ -165,6 +166,13 @@ class GradeController extends Controller
                     'teacher_id' => auth()->user()->id ?? null,
                 ])
             );
+
+            // Notify Student (and Parent linked via student)
+            if ($grade && $grade->student && $grade->student->user) {
+                // Check if grade was actually updated/created recently? 
+                // For now, always notify on save.
+                $grade->student->user->notify(new GradePostedNotification($grade));
+            }
         }
 
         return redirect()->route('tenant.grades.index', [

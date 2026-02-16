@@ -7,6 +7,9 @@ use App\Models\Tenant\Announcement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Notification;
+use App\Models\Tenant\User;
+use App\Notifications\Tenant\NewAnnouncementNotification;
 
 class AnnouncementController extends Controller
 {
@@ -87,7 +90,64 @@ class AnnouncementController extends Controller
             $validated['excerpt'] = Str::limit(strip_tags($validated['content']), 150);
         }
 
-        $request->user()->announcements()->create($validated);
+        $announcement = $request->user()->announcements()->create($validated);
+
+        if ($validated['is_published']) {
+            $query = User::where('is_active', true);
+
+            if ($validated['target_audience'] === 'teachers') {
+                $query->whereHas('teacher'); // Assuming relation exists or filter by role
+                // Better: filter by role using the scope or attribute if available, or just check role column
+                 $query->where('role', \App\Enums\UserRole::Teacher);
+            } elseif ($validated['target_audience'] === 'students') {
+                 $query->where('role', \App\Enums\UserRole::Student);
+            }
+            // If 'all', no extra filter needed (sends to everyone)
+
+            // Exclude the creator? Maybe not needed if admin creates it.
+            // But if a teacher creates it, they might not need a notif.
+            $query->where('id', '!=', $request->user()->id);
+
+            $recipients = $query->get();
+            
+            if ($recipients->count() > 0) {
+                // Notification::send($recipients, new NewAnnouncementNotification($announcement));
+                
+                $notifications = [];
+                $events = [];
+                $now = now();
+                
+                foreach ($recipients as $recipient) {
+                    $uuid = (string) Str::uuid();
+                    
+                    $notifications[] = [
+                        'id' => $uuid,
+                        'type' => NewAnnouncementNotification::class,
+                        'notifiable_type' => get_class($recipient),
+                        'notifiable_id' => $recipient->id,
+                        'data' => json_encode([
+                            'type' => 'announcement',
+                            'title' => 'Pengumuman Baru',
+                            'message' => $announcement->title,
+                            'link' => route('tenant.announcements.show', $announcement->id),
+                        ]),
+                        'read_at' => null,
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ];
+                    
+                    $events[] = new \App\Events\AnnouncementPosted($announcement, $recipient->id, $uuid);
+                }
+                
+                // Batch insert to DB
+                DB::table('notifications')->insert($notifications);
+                
+                // Dispatch events synchronously
+                foreach ($events as $event) {
+                    event($event);
+                }
+            }
+        }
 
         return redirect()->route('tenant.announcements.index')
             ->with('success', 'Pengumuman berhasil dibuat.');

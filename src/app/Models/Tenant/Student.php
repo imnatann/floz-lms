@@ -12,6 +12,11 @@ class Student extends Model
 {
     use HasFactory, UsesTenantConnection;
 
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'email', 'email');
+    }
+
     protected $fillable = [
         'nis', 'nisn', 'nik', 'family_card_number', 'name', 'gender', 'birth_place', 'birth_date',
         'religion', 'address', 'parent_name', 'parent_phone', 'email',

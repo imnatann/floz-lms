@@ -4,7 +4,6 @@ namespace App\Policies\Tenant;
 
 use App\Models\Tenant\Student;
 use App\Models\Tenant\User;
-use App\Enums\UserRole;
 
 class StudentPolicy
 {

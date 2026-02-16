@@ -1,12 +1,11 @@
 @import "tailwindcss";
 @import "./mastra.css";
+/* ===== Google Fonts ===== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 @plugin "daisyui" {
     themes: light --default;
 }
-
-/* ===== Google Fonts ===== */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 /* ===== DaisyUI Theme Override ===== */
 :root {

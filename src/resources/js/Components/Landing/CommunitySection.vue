@@ -21,7 +21,7 @@ import { Link } from '@inertiajs/vue3';
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6 auto-rows-[minmax(180px, auto)]">
                 
                 <!-- Card 1: GitHub (Variable Width) -->
-                <a href="https://github.com/floz/lms" target="_blank" class="md:col-span-2 row-span-2 group relative overflow-hidden rounded-3xl border border-slate-800 bg-[#0c0c0e] hover:border-slate-600 transition-all duration-300">
+                <a href="https://github.com/imnatann/floz-lms" target="_blank" class="md:col-span-2 row-span-2 group relative overflow-hidden rounded-3xl border border-slate-800 bg-[#0c0c0e] hover:border-slate-600 transition-all duration-300">
                     <div class="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                     
                     <div class="p-8 h-full flex flex-col justify-between relative z-10">

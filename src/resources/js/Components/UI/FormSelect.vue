@@ -20,7 +20,17 @@
           disabled ? 'cursor-not-allowed bg-slate-50 text-slate-400' : '',
         ]"
       >
-        <slot />
+        <option v-if="placeholder" value="" disabled selected>{{ placeholder }}</option>
+        <template v-if="options && options.length">
+            <option 
+                v-for="(opt, index) in options" 
+                :key="index" 
+                :value="typeof opt === 'object' ? opt.value : opt"
+            >
+                {{ typeof opt === 'object' ? opt.label : opt }}
+            </option>
+        </template>
+        <slot v-else />
       </select>
       <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
         <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -39,6 +49,8 @@
 defineProps({
   modelValue: { type: [String, Number], default: '' },
   label:      { type: String, default: '' },
+  options:    { type: Array, default: () => [] },
+  placeholder:{ type: String, default: '' },
   required:   { type: Boolean, default: false },
   disabled:   { type: Boolean, default: false },
   error:      { type: String, default: '' },

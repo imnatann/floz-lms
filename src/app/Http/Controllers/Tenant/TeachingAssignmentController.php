@@ -8,6 +8,7 @@ use App\Models\Tenant\SchoolClass;
 use App\Models\Tenant\Subject;
 use App\Models\Tenant\Teacher;
 use App\Models\Tenant\TeachingAssignment;
+use App\Notifications\Tenant\NewAssignmentNotification;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -38,6 +39,54 @@ class TeachingAssignmentController extends Controller
             'academicYears' => AcademicYear::orderByDesc('start_date')->get(['id', 'name', 'is_active']),
             'filters'       => $request->only(['teacher_id', 'subject_id', 'class_id', 'academic_year_id']),
         ]);
+    }
+
+    public function create()
+    {
+        return Inertia::render('Tenant/TeachingAssignments/Create', [
+            'teachers'      => Teacher::where('status', 'active')->orderBy('name')->get(['id', 'name', 'nip']),
+            'subjects'      => Subject::where('status', 'active')->orderBy('name')->get(['id', 'name', 'code']),
+            'classes'       => SchoolClass::where('status', 'active')->orderBy('name')->get(['id', 'name']),
+            'academicYears' => AcademicYear::orderByDesc('start_date')->get(['id', 'name', 'is_active']),
+        ]);
+    }
+
+    public function edit(TeachingAssignment $teachingAssignment)
+    {
+        return Inertia::render('Tenant/TeachingAssignments/Edit', [
+            'assignment'    => $teachingAssignment->load(['teacher', 'subject', 'schoolClass', 'academicYear']),
+            'teachers'      => Teacher::where('status', 'active')->orderBy('name')->get(['id', 'name', 'nip']),
+            'subjects'      => Subject::where('status', 'active')->orderBy('name')->get(['id', 'name', 'code']),
+            'classes'       => SchoolClass::where('status', 'active')->orderBy('name')->get(['id', 'name']),
+            'academicYears' => AcademicYear::orderByDesc('start_date')->get(['id', 'name', 'is_active']),
+        ]);
+    }
+
+    public function update(Request $request, TeachingAssignment $teachingAssignment)
+    {
+        $validated = $request->validate([
+            'teacher_id'       => 'required|exists:tenant.teachers,id',
+            'subject_id'       => 'required|exists:tenant.subjects,id',
+            'class_id'         => 'required|exists:tenant.classes,id',
+            'academic_year_id' => 'required|exists:tenant.academic_years,id',
+        ]);
+
+        // Check for duplicate assignment (excluding current one)
+        $exists = TeachingAssignment::where([
+            'teacher_id'       => $request->teacher_id,
+            'subject_id'       => $request->subject_id,
+            'class_id'         => $request->class_id,
+            'academic_year_id' => $request->academic_year_id,
+        ])->where('id', '!=', $teachingAssignment->id)->exists();
+
+        if ($exists) {
+            return redirect()->back()->with('error', 'Penugasan ini sudah ada.');
+        }
+
+        $teachingAssignment->update($validated);
+
+        return redirect()->route('tenant.teaching-assignments.index')
+            ->with('success', 'Penugasan guru berhasil diperbarui.');
     }
 
     public function store(Request $request)
@@ -74,7 +123,12 @@ class TeachingAssignmentController extends Controller
         }
         */
 
-        TeachingAssignment::create($validated);
+        $assignment = TeachingAssignment::create($validated);
+
+        // Notify Teacher
+        if ($assignment->teacher && $assignment->teacher->user) {
+            $assignment->teacher->user->notify(new NewAssignmentNotification($assignment));
+        }
 
         return redirect()->route('tenant.teaching-assignments.index')
             ->with('success', 'Penugasan guru berhasil ditambahkan.');

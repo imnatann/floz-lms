@@ -58,6 +58,12 @@ class User extends Authenticatable
         return $this->hasOne(Teacher::class, 'email', 'email');
     }
 
+    public function announcements()
+    {
+        return $this->hasMany(Announcement::class, 'user_id');
+    }
+
+    // Helpers
     // Helpers
     public function isSuperAdmin(): bool
     {
@@ -82,5 +88,13 @@ class User extends Authenticatable
     public function isParent(): bool
     {
         return $this->role === UserRole::Parent;
+    }
+
+    /**
+     * The channels the user should receive broadcast notifications on.
+     */
+    public function receivesBroadcastNotificationsOn(): string
+    {
+        return 'App.Models.Tenant.User.'.$this->id;
     }
 }
