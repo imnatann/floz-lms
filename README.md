@@ -1,4 +1,4 @@
-# FLOZ OPENSOURCE LEARNING MANAGEMENT SYSTEM (LMS)
+    # FLOZ OPENSOURCE LEARNING MANAGEMENT SYSTEM (LMS)
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Laravel](https://img.shields.io/badge/laravel-%23FF2D20.svg?style=flat&logo=laravel&logoColor=white)
@@ -15,10 +15,12 @@
 *   **Multi-Tenant Architecture:** Single codebase supporting multiple schools with isolated databases.
 *   **Role-Based Access Control (RBAC):** Granular permissions for Super Admins, School Admins, Teachers, Students, and Parents.
 *   **Academic Management:** Manage classes, subjects, academic years, and semesters efficiently.
+*   **Schedule Management:** Interactive class schedules with bulk insert, conflict detection, and calendar view.
 *   **GradeBook System:** Comprehensive grading system supporting K-13 and Merdeka curriculum standards.
 *   **Report Card Generation:** Auto-generate PDF report cards with custom templates.
-*   **Announcements System:** Rich-text announcements with cover images, pinning, and audience targeting.
-*   **Modern UI/UX:** Built with Tailwind CSS and Headless UI for a premium, responsive experience.
+*   **Announcements System:** Notion-style rich-text editor with cover images, pinning, and targeted notifications.
+*   **Real-Time Notifications:** Instant alerts for grades, announcements, and absences using Laravel Reverb.
+*   **Modern UI/UX:** Built with Tailwind CSS and Headless UI for a premium, responsive experience (Paper Brutalism design).
 
 ## 📸 Screenshots
 
