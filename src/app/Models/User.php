@@ -45,4 +45,14 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function student()
+    {
+        return $this->hasOne(\App\Models\Tenant\Student::class);
+    }
+
+    public function teacher()
+    {
+        return $this->hasOne(\App\Models\Tenant\Teacher::class);
+    }
 }

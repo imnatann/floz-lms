@@ -45,7 +45,7 @@
 
 1.  **Clone the repository**
     ```bash
-    git clone https://github.com/yourusername/floz-lms.git
+    git clone https://github.com/imnatann/floz-lms.git
     cd floz-lms
     ```
 

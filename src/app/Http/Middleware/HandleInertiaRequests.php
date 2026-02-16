@@ -32,7 +32,13 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => fn () => $request->user()?->load(['student:id,email', 'teacher:id,email']),
+                'user' => function () use ($request) {
+                    $user = $request->user();
+                    if ($user && app()->bound('currentTenant')) {
+                        $user->load(['student:id,email', 'teacher:id,email']);
+                    }
+                    return $user;
+                },
                 'permissions' => fn () => $request->user() ? [
                     'manage_students' => $request->user()->can('create', \App\Models\Tenant\Student::class),
                     'manage_teachers' => $request->user()->can('create', \App\Models\Tenant\Teacher::class),
