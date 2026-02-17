@@ -4,6 +4,7 @@ namespace App\Models\Tenant;
 
 use App\Traits\HasAcademicYear;
 use App\Traits\UsesTenantConnection;
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class SchoolClass extends Model
 {
-    use HasFactory, UsesTenantConnection, HasAcademicYear;
+    use HasFactory, UsesTenantConnection, HasAcademicYear, Auditable;
 
     protected $table = 'classes';
 

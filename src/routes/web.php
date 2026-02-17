@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Platform\DashboardController as PlatformDashboardController;
 use App\Http\Controllers\Platform\TenantController;
+use App\Http\Controllers\Platform\LogController;
 use App\Http\Controllers\Tenant\DashboardController as TenantDashboardController;
 use App\Http\Controllers\Tenant\StudentController;
 use App\Http\Controllers\Tenant\GradeController;
@@ -41,6 +42,12 @@ Route::prefix('platform')
     ->group(function () {
         Route::get('/dashboard', [PlatformDashboardController::class, 'index'])->name('dashboard');
         Route::resource('tenants', TenantController::class);
+
+        // Logs
+        Route::get('/logs', [LogController::class, 'index'])->name('logs.index');
+        Route::post('/logs/toggle-query', [LogController::class, 'toggleQueryLogging'])->name('logs.toggle-query');
+        Route::post('/logs/system/clear', [LogController::class, 'clearSystemLogs'])->name('logs.clear-system');
+        Route::post('/logs/queries/clear', [LogController::class, 'clearQueryLogs'])->name('logs.clear-queries');
     });
 
 // ─── Tenant Routes (school.floz.id) ─────────────────────────────────
@@ -98,6 +105,9 @@ Route::prefix('tenant')
 
         // Announcements
         Route::resource('announcements', AnnouncementController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy']);
+
+        // Audit Logs
+        Route::get('/audit-logs', [\App\Http\Controllers\Tenant\AuditLogController::class, 'index'])->name('audit-logs.index');
 
         // Subscription (allow even when expired)
         Route::get('/subscription/expired', function () {

@@ -6,9 +6,11 @@ use App\Traits\UsesTenantConnection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+use App\Traits\Auditable;
+
 class StudentMutation extends Model
 {
-    use UsesTenantConnection;
+    use UsesTenantConnection, Auditable;
 
     protected $fillable = [
         'student_id',
