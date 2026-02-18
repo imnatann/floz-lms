@@ -22,17 +22,18 @@ RUN apt-get update && apt-get install -y \
     cron \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install \
-        pdo \
-        pdo_pgsql \
-        pgsql \
-        mbstring \
-        exif \
-        pcntl \
-        bcmath \
-        gd \
-        zip \
-        intl \
-        opcache \
+    pdo \
+    pdo_pgsql \
+    pgsql \
+    mbstring \
+    exif \
+    pcntl \
+    bcmath \
+    gd \
+    zip \
+    intl \
+    opcache \
+    && pecl channel-update pecl.php.net \
     && pecl install redis \
     && docker-php-ext-enable redis \
     && apt-get clean \
@@ -57,9 +58,9 @@ RUN useradd -G www-data,root -u $uid -d /home/$user $user \
 WORKDIR /var/www/html
 
 # Copy PHP configuration
-COPY php.ini /usr/local/etc/php/conf.d/custom.ini
+COPY php/php.ini /usr/local/etc/php/conf.d/custom.ini
 
 # Copy supervisor config
-COPY ../supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 USER $user

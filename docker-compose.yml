@@ -2,8 +2,8 @@ services:
   # Laravel Application
   app:
     build:
-      context: ./docker/php
-      dockerfile: Dockerfile
+      context: ./docker
+      dockerfile: php/Dockerfile
     container_name: floz-app
     restart: always
     working_dir: /var/www/html
@@ -74,8 +74,8 @@ services:
   # Horizon Queue Worker
   horizon:
     build:
-      context: ./docker/php
-      dockerfile: Dockerfile
+      context: ./docker
+      dockerfile: php/Dockerfile
     container_name: floz-horizon
     restart: always
     working_dir: /var/www/html
@@ -93,8 +93,8 @@ services:
   # Scheduler (Cron)
   scheduler:
     build:
-      context: ./docker/php
-      dockerfile: Dockerfile
+      context: ./docker
+      dockerfile: php/Dockerfile
     container_name: floz-scheduler
     restart: always
     working_dir: /var/www/html

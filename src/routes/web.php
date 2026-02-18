@@ -109,6 +109,19 @@ Route::prefix('tenant')
         // Audit Logs
         Route::get('/audit-logs', [\App\Http\Controllers\Tenant\AuditLogController::class, 'index'])->name('audit-logs.index');
 
+        // Courses (Mata Pelajaran - Per Pertemuan)
+        Route::get('courses', [\App\Http\Controllers\Tenant\MeetingController::class, 'index'])->name('courses.index');
+        Route::get('courses/{teachingAssignment}', [\App\Http\Controllers\Tenant\MeetingController::class, 'show'])->name('courses.show');
+        Route::put('meetings/{meeting}', [\App\Http\Controllers\Tenant\MeetingController::class, 'updateMeeting'])->name('meetings.update');
+        Route::post('meetings/{meeting}/materials', [\App\Http\Controllers\Tenant\MeetingController::class, 'storeMaterial'])->name('meetings.materials.store');
+        Route::delete('materials/{meetingMaterial}', [\App\Http\Controllers\Tenant\MeetingController::class, 'destroyMaterial'])->name('materials.destroy');
+
+        // Assignments (Tugas)
+        Route::post('assignments/{offlineAssignment}/submit', [\App\Http\Controllers\Tenant\OfflineAssignmentController::class, 'submit'])->name('assignments.submit');
+        Route::get('assignments/{offlineAssignment}/student/{student}', [\App\Http\Controllers\Tenant\OfflineAssignmentController::class, 'showStudent'])->name('assignments.student.show');
+        Route::post('assignments/{offlineAssignment}/student/{student}', [\App\Http\Controllers\Tenant\OfflineAssignmentController::class, 'storeCorrection'])->name('assignments.correction.store');
+        Route::resource('assignments', \App\Http\Controllers\Tenant\OfflineAssignmentController::class)->parameters(['assignments' => 'offlineAssignment']);
+
         // Subscription (allow even when expired)
         Route::get('/subscription/expired', function () {
             return inertia('Tenant/Subscription/Expired');

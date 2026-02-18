@@ -75,7 +75,7 @@ class User extends Authenticatable
 
     public function student()
     {
-        return $this->hasOne(\App\Models\Tenant\Student::class);
+        return $this->hasOne(\App\Models\Tenant\Student::class, 'email', 'email');
     }
 
     public function teacher()

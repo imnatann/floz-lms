@@ -79,11 +79,11 @@ return [
         'array'   => ':Attribute minimal memiliki :min anggota.',
     ],
     'not_in'               => ':Attribute yang dipilih tidak valid.',
-    'not_regex'            => Format :attribute tidak valid.',
+    'not_regex'            => 'Format :attribute tidak valid.',
     'numeric'              => ':Attribute harus berupa angka.',
     'password'             => 'Kata sandi salah.',
     'present'              => ':Attribute wajib ada.',
-    'regex'                => Format :attribute tidak valid.',
+    'regex'                => 'Format :attribute tidak valid.',
     'required'             => ':Attribute wajib diisi.',
     'required_if'          => ':Attribute wajib diisi bila :other adalah :value.',
     'required_unless'      => ':Attribute wajib diisi kecuali :other memiliki nilai :values.',
@@ -103,7 +103,7 @@ return [
     'timezone'             => ':Attribute harus berisi zona waktu yang valid.',
     'unique'               => ':Attribute sudah ada sebelumnya.',
     'uploaded'             => ':Attribute gagal diunggah.',
-    'url'                  => Format :attribute tidak valid.',
+    'url'                  => 'Format :attribute tidak valid.',
     'uuid'                 => ':Attribute harus merupakan UUID yang valid.',
 
     /*

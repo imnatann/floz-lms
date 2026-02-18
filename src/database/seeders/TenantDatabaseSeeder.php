@@ -61,22 +61,34 @@ class TenantDatabaseSeeder extends Seeder
             ['grade_level' => 11, 'academic_year_id' => $academicYear->id, 'status' => 'active']
         );
 
-        // 5. Create dummy students for Class A
+        // 5. Create dummy students for Class A (with User accounts for login)
         if (Student::count() < 5) {
+            $password = Hash::make('password');
+
+            // Student 1
+            $email1 = 'ahmad.dani@siswa.sekolah.id';
+            User::firstOrCreate(
+                ['email' => $email1],
+                ['name' => 'Ahmad Dani', 'password' => $password, 'role' => 'student', 'is_active' => true]
+            );
             Student::create([
-                'nis' => '2024001',
-                'name' => 'Ahmad Dani',
-                'class_id' => $classA->id,
-                'gender' => 'L',
-                'status' => 'active'
+                'nis' => '2024001', 'name' => 'Ahmad Dani', 'email' => $email1,
+                'class_id' => $classA->id, 'gender' => 'L', 'status' => 'active',
             ]);
+
+            // Student 2
+            $email2 = 'bunga.citra@siswa.sekolah.id';
+            User::firstOrCreate(
+                ['email' => $email2],
+                ['name' => 'Bunga Citra', 'password' => $password, 'role' => 'student', 'is_active' => true]
+            );
             Student::create([
-                'nis' => '2024002',
-                'name' => 'Bunga Citra',
-                'class_id' => $classA->id,
-                'gender' => 'P',
-                'status' => 'active'
+                'nis' => '2024002', 'name' => 'Bunga Citra', 'email' => $email2,
+                'class_id' => $classA->id, 'gender' => 'P', 'status' => 'active',
             ]);
         }
+
+        // 6. Seed 10 additional students with login accounts
+        $this->call(StudentSeeder::class);
     }
 }
