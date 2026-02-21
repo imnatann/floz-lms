@@ -9,6 +9,18 @@ use Illuminate\Auth\Access\Response;
 class OfflineAssignmentPolicy
 {
     /**
+     * Determine whether the user is a school admin, granting all access.
+     */
+    public function before(User $user, string $ability): ?bool
+    {
+        if ($user->isSchoolAdmin()) {
+            return true;
+        }
+
+        return null;
+    }
+
+    /**
      * Determine whether the user can view any models.
      */
     public function viewAny(User $user): bool

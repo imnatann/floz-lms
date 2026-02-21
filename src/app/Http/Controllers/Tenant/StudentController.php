@@ -11,6 +11,10 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use OpenApi\Attributes as OA;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\Tenant\User;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
+
 
 class StudentController extends Controller
 {
@@ -184,9 +188,32 @@ class StudentController extends Controller
             'class_id'     => 'nullable|exists:tenant.classes,id',
             'nik'          => 'nullable|string|max:20|unique:tenant.students',
             'family_card_number' => 'nullable|string|max:20',
+
+            // Account fields
+            'create_account' => 'nullable|boolean',
         ]);
 
-        Student::create($validated);
+        $student = Student::create($validated);
+
+        // Create User Account if requested
+        if ($request->create_account) {
+            $email = $request->nis . '@siswa.sekolah.id';
+            
+            // Check if user with email already exists in TENANT database
+            $existingUser = User::where('email', $email)->first();
+            
+            if (!$existingUser) {
+                User::create([
+                    'name' => $request->name,
+                    'email' => $email,
+                    'password' => Hash::make('password'),
+                    'role' => \App\Enums\UserRole::Student,
+                ]);
+
+                // Update student email to match
+                $student->update(['email' => $email]);
+            }
+        }
 
         return redirect()->route('tenant.students.index')
             ->with('success', 'Siswa berhasil ditambahkan.');
@@ -294,9 +321,42 @@ class StudentController extends Controller
             'nik'          => "nullable|string|max:20|unique:tenant.students,nik,{$student->id}",
             'family_card_number' => 'nullable|string|max:20',
             'status'       => 'required|in:active,graduated,transferred,dropout',
+
+            // Account fields
+            'update_account' => 'nullable|boolean',
         ]);
 
         $student->update($validated);
+
+        // Handle Account Updates / Reset
+        if ($request->update_account) {
+            // Generate email from NIS (or use existing student email if we want to respect manual overrides, but requirement implies strict automation)
+            // Let's stick to NIS@siswa.sekolah.id for consistency as requested
+            $email = $request->nis . '@siswa.sekolah.id';
+
+            $user = User::where('email', $email)->first();
+
+            // If user exists, reset password
+            if ($user) {
+                $user->password = Hash::make('password');
+                $user->name = $request->name; // Update name just in case
+                $user->save();
+            } 
+            // If user doesn't exist, create it
+            else {
+                 User::create([
+                    'name' => $request->name,
+                    'email' => $email,
+                    'password' => Hash::make('password'),
+                    'role' => \App\Enums\UserRole::Student,
+                ]);
+            }
+
+            // Ensure student email is synced
+            if ($student->email !== $email) {
+                $student->update(['email' => $email]);
+            }
+        }
 
         return redirect()->route('tenant.students.show', $student)
             ->with('success', 'Data siswa berhasil diperbarui.');

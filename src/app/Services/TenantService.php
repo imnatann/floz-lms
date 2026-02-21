@@ -17,7 +17,7 @@ class TenantService
     public function createTenant(array $data): Tenant
     {
         $slug = Str::slug($data['name']);
-        $databaseName = config('tenancy.database_prefix') . Str::snake($slug);
+        $databaseName = config('tenancy.database_prefix') . str_replace('-', '_', $slug);
 
         // Create tenant record in central database
         $tenant = Tenant::create([

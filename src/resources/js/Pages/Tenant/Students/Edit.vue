@@ -17,6 +17,7 @@ const form = useForm({
   address: props.student.address || '', parent_name: props.student.parent_name || '',
   parent_phone: props.student.parent_phone || '', email: props.student.email || '',
   class_id: props.student.class_id || '', status: props.student.status,
+  update_account: false,
 });
 
 const submit = () => form.put(`/tenant/students/${props.student.id}`);
@@ -102,6 +103,35 @@ const submit = () => form.put(`/tenant/students/${props.student.id}`);
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <FormInput v-model="form.parent_name" label="Nama Orang Tua" />
             <FormInput v-model="form.parent_phone" label="Telepon Orang Tua" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Akun Login -->
+      <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div class="border-b border-slate-100 bg-slate-50/60 px-6 py-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-100 text-sm">🔐</div>
+              <div>
+                <h3 class="text-sm font-semibold text-slate-700">Akun Login</h3>
+                <p class="text-xs text-slate-400">Kelola akses masuk aplikasi untuk siswa</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+               <input type="checkbox" id="update_account" v-model="form.update_account" class="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
+               <label for="update_account" class="text-sm font-medium text-slate-700">Reset Password / Buat Akun</label>
+            </div>
+          </div>
+        </div>
+        <div v-if="form.update_account" class="space-y-4 p-6 transition-all duration-300">
+          <div class="rounded-lg bg-blue-50 p-4 text-sm text-blue-700">
+             <p class="font-medium">Tindakan ini akan mereset password atau membuat akun baru (jika belum ada) dengan detail:</p>
+            <ul class="mt-2 list-disc list-inside space-y-1 ml-2">
+                <li>Username: <strong>{{ form.nis }}@siswa.sekolah.id</strong></li>
+                <li>Password Baru: <strong>password</strong></li>
+            </ul>
+             <p class="mt-2 text-xs">Pastikan NIS sudah benar sebelum menyimpan.</p>
           </div>
         </div>
       </div>

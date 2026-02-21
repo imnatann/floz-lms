@@ -236,10 +236,10 @@ const submitQuiz = () => {
             </div>
 
             <!-- ===== QUIZ SUBMISSION FORM ===== -->
-            <div v-if="isQuiz && !is_past_due">
+            <div v-if="isQuiz && !is_past_due && !submission?.grade">
                 <div v-if="submission" class="bg-blue-50/50 border border-blue-100 rounded-xl p-4 mb-4">
                     <p class="text-sm text-blue-700 font-medium">✅ Quiz sudah dikumpulkan pada {{ formatDate(submission.submitted_at) }}</p>
-                    <p v-if="!is_past_due" class="text-xs text-blue-500 mt-1">Anda masih bisa mengubah jawaban sebelum batas waktu.</p>
+                    <p class="text-xs text-blue-500 mt-1">Anda masih bisa mengubah jawaban sebelum dinilai atau batas waktu habis.</p>
                 </div>
 
                 <div class="space-y-6">
@@ -312,9 +312,12 @@ const submitQuiz = () => {
                 </div>
             </div>
 
-            <!-- Past Due Quiz -->
-            <div v-if="isQuiz && is_past_due && submission" class="space-y-4">
-                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-amber-700 text-sm">⏰ Batas waktu telah lewat. Jawaban tidak bisa diubah.</div>
+            <!-- Past Due or Graded Quiz -->
+            <div v-if="isQuiz && submission && (is_past_due || submission.grade)" class="space-y-4">
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-amber-700 text-sm">
+                    <span v-if="submission.grade">✅ Quiz telah dinilai. Jawaban tidak bisa diubah.</span>
+                    <span v-else>⏰ Batas waktu telah lewat. Jawaban tidak bisa diubah.</span>
+                </div>
                 <div v-for="(question, qIndex) in questions" :key="question.id" class="border border-slate-200 rounded-xl p-4 space-y-2">
                     <div class="flex items-center gap-2">
                         <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 text-slate-600 text-xs font-bold">{{ qIndex + 1 }}</span>
@@ -328,7 +331,7 @@ const submitQuiz = () => {
             </div>
 
             <!-- ===== MANUAL SUBMISSION FORM ===== -->
-            <form v-if="!isQuiz && !is_past_due" @submit.prevent="submitManual" class="space-y-5">
+            <form v-if="!isQuiz && !is_past_due && !submission?.grade" @submit.prevent="submitManual" class="space-y-5">
                 <div v-if="submission" class="flex items-center gap-3">
                     <div class="flex-1 h-px bg-slate-200"></div>
                     <span class="text-xs font-medium text-slate-400 uppercase tracking-wider">Kirim Ulang</span>
@@ -376,9 +379,12 @@ const submitQuiz = () => {
                 </div>
             </form>
 
-            <!-- Past Due Manual -->
-            <div v-else-if="!isQuiz && is_past_due && submission" class="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
-                <p class="text-amber-700 text-sm">Batas waktu telah lewat. Anda tidak dapat mengubah jawaban lagi.</p>
+            <!-- Past Due or Graded Manual -->
+            <div v-else-if="!isQuiz && submission && (is_past_due || submission.grade)" class="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                <p class="text-amber-700 text-sm">
+                    <span v-if="submission.grade">Tugas telah dinilai. Jawaban tidak dapat diubah lagi.</span>
+                    <span v-else>Batas waktu telah lewat. Anda tidak dapat mengubah jawaban lagi.</span>
+                </p>
             </div>
         </div>
     </div>

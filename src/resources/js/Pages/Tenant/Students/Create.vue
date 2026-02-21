@@ -13,6 +13,7 @@ const props = defineProps({ classes: Array });
 const form = useForm({
   nis: '', nisn: '', name: '', gender: '', birth_place: '', birth_date: '',
   religion: '', address: '', parent_name: '', parent_phone: '', email: '', class_id: '',
+  create_account: false,
 });
 
 const submit = () => form.post('/tenant/students');
@@ -92,6 +93,35 @@ const submit = () => form.post('/tenant/students');
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <FormInput v-model="form.parent_name" label="Nama Orang Tua" placeholder="Nama lengkap wali" :error="form.errors.parent_name" />
             <FormInput v-model="form.parent_phone" label="Telepon Orang Tua" placeholder="0812-xxxx-xxxx" :error="form.errors.parent_phone" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Akun Login -->
+      <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div class="border-b border-slate-100 bg-slate-50/60 px-6 py-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-100 text-sm">🔐</div>
+              <div>
+                <h3 class="text-sm font-semibold text-slate-700">Akun Login</h3>
+                <p class="text-xs text-slate-400">Akses masuk aplikasi untuk siswa</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+               <input type="checkbox" id="create_account" v-model="form.create_account" class="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500">
+               <label for="create_account" class="text-sm font-medium text-slate-700">Buat Akun Otomatis</label>
+            </div>
+          </div>
+        </div>
+        <div v-if="form.create_account" class="space-y-4 p-6 transition-all duration-300">
+          <div class="rounded-lg bg-blue-50 p-4 text-sm text-blue-700">
+            <p class="font-medium">Akun akan dibuat secara otomatis dengan detail berikut:</p>
+            <ul class="mt-2 list-disc list-inside space-y-1 ml-2">
+                <li>Username: <strong>{NIS}@siswa.sekolah.id</strong> (Contoh: 12345@siswa.sekolah.id)</li>
+                <li>Password Default: <strong>password</strong></li>
+            </ul>
+            <p class="mt-2 text-xs">Email pada data orang tua di atas tetap bersifat opsional dan terpisah dari akun login siswa.</p>
           </div>
         </div>
       </div>

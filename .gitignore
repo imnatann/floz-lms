@@ -6,3 +6,6 @@ vendor/
 .DS_Store
 storage/logs/*
 !storage/logs/.gitkeep
+
+# Exclude Mobile App Repository
+floz_mobile/

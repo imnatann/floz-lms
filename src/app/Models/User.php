@@ -21,7 +21,6 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'role',
     ];
 
     /**
@@ -44,42 +43,13 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'role' => \App\Enums\UserRole::class,
+            'password' => 'hashed',
         ];
     }
 
+    // Helper to check if user is a platform admin (which is true for all records in this table)
     public function isSuperAdmin(): bool
     {
-        return $this->role === \App\Enums\UserRole::SuperAdmin;
-    }
-
-    public function isSchoolAdmin(): bool
-    {
-        return $this->role === \App\Enums\UserRole::SchoolAdmin;
-    }
-
-    public function isTeacher(): bool
-    {
-        return $this->role === \App\Enums\UserRole::Teacher;
-    }
-
-    public function isStudent(): bool
-    {
-        return $this->role === \App\Enums\UserRole::Student;
-    }
-
-    public function isParent(): bool
-    {
-        return $this->role === \App\Enums\UserRole::Parent;
-    }
-
-    public function student()
-    {
-        return $this->hasOne(\App\Models\Tenant\Student::class, 'email', 'email');
-    }
-
-    public function teacher()
-    {
-        return $this->hasOne(\App\Models\Tenant\Teacher::class);
+        return true; 
     }
 }
