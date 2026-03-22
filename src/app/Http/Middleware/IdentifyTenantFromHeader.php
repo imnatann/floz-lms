@@ -40,12 +40,12 @@ class IdentifyTenantFromHeader
 
         // Configure the tenant database connection dynamically
         Config::set('database.connections.tenant.database', $tenant->database_name);
-        
+
         // Purge current connections to ensure fresh config is used
         DB::purge('central');
         DB::purge('tenant');
         DB::purge(Config::get('database.default'));
-        
+
         // Set tenant as the default connection for this request
         Config::set('database.default', 'tenant');
         DB::reconnect('tenant');

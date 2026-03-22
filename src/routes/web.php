@@ -30,15 +30,15 @@ Route::get('/docs', function () {
 
 Route::controller(LoginController::class)->group(function () {
     Route::get('/login', 'showLoginForm')->name('login');
-    Route::post('/login', 'login');
+    Route::post('/login', 'login')->middleware('throttle:web-login');
     Route::post('/logout', 'logout')->name('logout');
-    Route::get('/api/tenants/search', 'searchTenants')->name('tenants.search');
+    Route::get('/api/tenants/search', 'searchTenants')->middleware('throttle:tenant-search')->name('tenants.search');
 });
 
 // ─── Platform Routes (admin.floz.id) ────────────────────────────────
 Route::prefix('platform')
     ->name('platform.')
-    ->middleware(['auth'])
+    ->middleware(['auth', 'platform.access'])
     ->group(function () {
         Route::get('/dashboard', [PlatformDashboardController::class, 'index'])->name('dashboard');
         Route::resource('tenants', TenantController::class);
@@ -53,7 +53,7 @@ Route::prefix('platform')
 // ─── Tenant Routes (school.floz.id) ─────────────────────────────────
 Route::prefix('tenant')
     ->name('tenant.')
-    ->middleware(['auth'])
+    ->middleware(['auth', 'tenant.access'])
     ->group(function () {
         Route::get('/dashboard', [TenantDashboardController::class, 'index'])->name('dashboard');
 

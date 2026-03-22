@@ -21,7 +21,7 @@
 
 ## ✨ Overview
 
-**FLOZ LMS** is a production-ready, multi-tenant Learning Management System purpose-built for Indonesian educational institutions. It provides schools with a fully isolated environment to manage their academic operations — from student enrollment and grading to real-time announcements and per-session course management.
+**FLOZ LMS** is a multi-tenant Learning Management System purpose-built for Indonesian educational institutions. It provides schools with a fully isolated environment to manage their academic operations — from student enrollment and grading to real-time announcements and per-session course management.
 
 Each school (tenant) operates on its own database, ensuring complete data isolation while sharing a single codebase.
 
@@ -117,25 +117,28 @@ Each school (tenant) operates on its own database, ensuring complete data isolat
 git clone https://github.com/imnatann/floz-lms.git
 cd floz-lms
 
-# 2. Install dependencies
+# 2. Enter the Laravel app
+cd src
+
+# 3. Install dependencies
 composer install
 npm install
 
-# 3. Environment
+# 4. Environment
 cp .env.example .env
 php artisan key:generate
 
-# 4. Database — configure .env with your PostgreSQL credentials, then:
+# 5. Database — configure .env with your PostgreSQL credentials, then:
 php artisan migrate --seed          # Central database
 php artisan tenants:migrate         # Tenant databases
 
-# 5. Build frontend
+# 6. Build frontend
 npm run build
 ```
 
 ### Running Locally
 
-You need **4 terminals** running simultaneously:
+From `src`, you need **4 terminals** running simultaneously:
 
 ```bash
 # Terminal 1 — Application Server
@@ -158,6 +161,21 @@ npm run dev
 | `http://localhost:8000` | Landing Page |
 | `http://{tenant}.localhost:8000` | Tenant Portal |
 | **Super Admin** | `admin@floz.id` / `password` |
+
+---
+
+## 🐳 Docker Notes
+
+- `docker-compose.dev.yml` is for bind-mounted local development.
+- `docker-compose.yml` is now aimed at self-contained production-style images, so it no longer depends on mounting `./src` from the host into the app containers.
+- Set real production values for `APP_KEY`, `DB_PASSWORD`, mail settings, storage credentials, and domain-related tenancy variables before deploying.
+- The production compose file now includes container health checks for `app`, `nginx`, `postgres`, and `redis`.
+
+## 🔐 Environment Notes
+
+- Central platform DB should come from `TENANCY_CENTRAL_DATABASE` and defaults to `floz_central`.
+- Tenant databases are created dynamically with the prefix from `TENANCY_DATABASE_PREFIX`.
+- Do not deploy with example secrets or localhost URLs from `.env.example`.
 
 ---
 

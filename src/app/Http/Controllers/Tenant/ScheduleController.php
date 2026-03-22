@@ -14,6 +14,10 @@ class ScheduleController extends Controller
 {
     public function index(Request $request)
     {
+        if (! $request->user()->isSchoolAdmin()) {
+            abort(403, 'Unauthorized');
+        }
+
         // For filtering by class in the admin view
         $classId = $request->input('class_id');
         $classes = SchoolClass::with('homeroomTeacher')

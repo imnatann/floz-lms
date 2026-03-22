@@ -15,6 +15,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'tenant.session' => \App\Http\Middleware\ResolveTenantFromSession::class,
+            'platform.access' => \App\Http\Middleware\PlatformAccess::class,
+            'tenant.access' => \App\Http\Middleware\TenantAccess::class,
         ]);
         
         $middleware->web(append: [

@@ -31,6 +31,8 @@ class ReportCardController extends Controller
     #[OA\Response(response: 200, description: "List of report cards")]
     public function index(Request $request)
     {
+        $this->ensureReportCardAccess($request);
+
         $reportCards = ReportCard::query()
             ->with(['student', 'schoolClass', 'semester.academicYear'])
             ->when($request->class_id, fn($q, $c) => $q->where('class_id', $c))
@@ -70,6 +72,8 @@ class ReportCardController extends Controller
     #[OA\Response(response: 302, description: "Redirect to index")]
     public function generate(Request $request)
     {
+        $this->ensureReportCardAccess($request);
+
         $validated = $request->validate([
             'class_id'    => 'required|exists:tenant.classes,id',
             'semester_id' => 'required|exists:tenant.semesters,id',
@@ -107,6 +111,8 @@ class ReportCardController extends Controller
     #[OA\Response(response: 200, description: "Report card details")]
     public function show(ReportCard $reportCard)
     {
+        $this->ensureReportCardAccess(request());
+
         $reportCard->load([
             'student',
             'schoolClass.homeroomTeacher',
@@ -135,6 +141,8 @@ class ReportCardController extends Controller
     #[OA\Response(response: 302, description: "Redirect back")]
     public function publish(ReportCard $reportCard)
     {
+        $this->ensureReportCardAccess(request());
+
         $this->reportCardService->publish($reportCard);
 
         return back()->with('success', 'Rapor berhasil dipublikasikan.');
@@ -157,8 +165,17 @@ class ReportCardController extends Controller
     )]
     public function downloadPdf(ReportCard $reportCard)
     {
+        $this->ensureReportCardAccess(request());
+
         $path = $this->pdfService->generateReportCardPdf($reportCard);
 
         return response()->download($path);
+    }
+
+    private function ensureReportCardAccess(Request $request): void
+    {
+        $user = $request->user();
+
+        abort_unless($user && ($user->isSchoolAdmin() || $user->isTeacher()), 403, 'Unauthorized');
     }
 }

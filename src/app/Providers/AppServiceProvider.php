@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Gate;
 use App\Models\Tenant\Student;
@@ -26,6 +29,24 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        RateLimiter::for('web-login', function (Request $request) {
+            return Limit::perMinute(5)->by(strtolower($request->input('email')).'|'.$request->ip());
+        });
+
+        RateLimiter::for('tenant-search', function (Request $request) {
+            return Limit::perMinute(30)->by($request->ip());
+        });
+
+        RateLimiter::for('mobile-auth', function (Request $request) {
+            return Limit::perMinute(5)->by(($request->header('X-Tenant-Slug') ?? 'unknown').'|'.$request->ip());
+        });
+
+        RateLimiter::for('mobile-api', function (Request $request) {
+            $userKey = $request->user()?->getAuthIdentifier() ?? 'guest';
+
+            return Limit::perMinute(60)->by($userKey.'|'.($request->header('X-Tenant-Slug') ?? 'unknown').'|'.$request->ip());
+        });
+
         Gate::policy(Student::class, StudentPolicy::class);
         Gate::policy(Grade::class, GradePolicy::class);
         Gate::policy(Teacher::class, TeacherPolicy::class);

@@ -30,6 +30,7 @@ class MobileGradeController extends Controller
                 ->map(function ($subjectGrades, $subjectId) {
                     $subject = $subjectGrades->first()->subject;
                     $avg = round($subjectGrades->avg('final_score'), 1) ?? 0.0;
+
                     return [
                         'subject_id'   => $subjectId,
                         'subject_name' => $subject->name ?? '-',
@@ -82,16 +83,16 @@ class MobileGradeController extends Controller
 
             $grades = Grade::where('student_id', $student->id)
                 ->where('subject_id', $subjectId)
-                ->with('subject')
+                ->with(['subject', 'semester'])
                 ->get()
                 ->map(fn($g) => [
                     'id'           => $g->id,
-                    'component'    => $g->description ?? '-',
-                    'score'        => (float) ($g->knowledge_score ?? 0),
+                    'component'    => $g->description ?? $g->component ?? '-',
+                    'score'        => (float) ($g->knowledge_score ?? $g->score ?? 0),
                     'final_score'  => (float) ($g->final_score ?? 0),
-                    'kkm'          => (float) ($g->subject->kkm ?? 75),
+                    'kkm'          => (float) ($g->subject->kkm ?? $g->kkm ?? 75),
                     'predicate'    => $g->predicate,
-                    'semester'     => 'Semester ' . ($g->semester->semester_number ?? '-'),
+                    'semester'     => $g->semester?->label() ?? ('Semester ' . ($g->semester->semester_number ?? '-')),
                     'created_at'   => $g->created_at?->toISOString(),
                 ]);
 

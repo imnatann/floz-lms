@@ -1,4 +1,26 @@
-FROM php:8.3-fpm
+FROM composer:2 AS vendor
+
+WORKDIR /app
+
+COPY src/composer.json src/composer.lock ./
+RUN composer install \
+    --no-dev \
+    --no-interaction \
+    --prefer-dist \
+    --optimize-autoloader \
+    --no-scripts
+
+FROM node:20-alpine AS frontend
+
+WORKDIR /app
+
+COPY src/package*.json ./
+RUN npm ci
+
+COPY src ./
+RUN npm run build
+
+FROM php:8.3-fpm AS production
 
 # Arguments
 ARG user=floz
@@ -58,9 +80,18 @@ RUN useradd -G www-data,root -u $uid -d /home/$user $user \
 WORKDIR /var/www/html
 
 # Copy PHP configuration
-COPY php/php.ini /usr/local/etc/php/conf.d/custom.ini
+COPY docker/php/php.ini /usr/local/etc/php/conf.d/custom.ini
 
 # Copy supervisor config
-COPY supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY docker/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Copy application code and production dependencies
+COPY src /var/www/html
+COPY --from=vendor /app/vendor /var/www/html/vendor
+COPY --from=frontend /app/public/build /var/www/html/public/build
+
+RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
+    && chown -R $user:www-data /var/www/html \
+    && chmod -R ug+rwx storage bootstrap/cache
 
 USER $user

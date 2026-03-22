@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Tenant\Announcement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Notification;
 use App\Models\Tenant\User;
@@ -55,11 +56,15 @@ class AnnouncementController extends Controller
 
     public function create()
     {
+        $this->ensureSchoolAdmin(request());
+
         return inertia('Tenant/Announcements/Form');
     }
 
     public function edit(Announcement $announcement)
     {
+        $this->ensureSchoolAdmin(request());
+
         return inertia('Tenant/Announcements/Form', [
             'announcement' => $announcement,
         ]);
@@ -67,6 +72,8 @@ class AnnouncementController extends Controller
 
     public function store(Request $request)
     {
+        $this->ensureSchoolAdmin($request);
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string', // Rich text HTML
@@ -140,7 +147,7 @@ class AnnouncementController extends Controller
                 }
                 
                 // Batch insert to DB
-                DB::table('notifications')->insert($notifications);
+                DB::connection('tenant')->table('notifications')->insert($notifications);
                 
                 // Dispatch events synchronously
                 foreach ($events as $event) {
@@ -155,6 +162,8 @@ class AnnouncementController extends Controller
 
     public function update(Request $request, Announcement $announcement)
     {
+        $this->ensureSchoolAdmin($request);
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
@@ -192,6 +201,8 @@ class AnnouncementController extends Controller
 
     public function destroy(Announcement $announcement)
     {
+        $this->ensureSchoolAdmin(request());
+
         // Delete cover image if exists and is local
         if ($announcement->cover_image_url && Str::startsWith($announcement->cover_image_url, '/storage/')) {
              $path = str_replace('/storage/', '', $announcement->cover_image_url);
@@ -203,5 +214,10 @@ class AnnouncementController extends Controller
         // Redirect to index if we are on the show page, or back if we are on index
         return redirect()->route('tenant.announcements.index')
             ->with('success', 'Pengumuman berhasil dihapus.');
+    }
+
+    private function ensureSchoolAdmin(Request $request): void
+    {
+        abort_unless($request->user()?->isSchoolAdmin(), 403, 'Unauthorized');
     }
 }

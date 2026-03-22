@@ -48,6 +48,7 @@ class IdentifyTenant
         // Switch Auth to use the Tenant User model
         Config::set('auth.providers.users.model', \App\Models\Tenant\User::class);
         Auth::getProvider()->setModel(\App\Models\Tenant\User::class);
+        Auth::forgetGuards();
 
         // Bind tenant to the container for access throughout the request
         app()->instance('currentTenant', $tenant);

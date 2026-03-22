@@ -23,17 +23,19 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1')->group(function () {
 
     // ─── Public (no auth required) ─────────────────────────────────
-    Route::get('/tenants/search', [\App\Http\Controllers\Auth\LoginController::class, 'searchTenants']);
+    Route::get('/tenants/search', [\App\Http\Controllers\Auth\LoginController::class, 'searchTenants'])
+        ->middleware('throttle:tenant-search');
 
     // ─── Auth (tenant required, but no token yet) ──────────────────
     Route::middleware([\App\Http\Middleware\IdentifyTenantFromHeader::class])->group(function () {
-        Route::post('/auth/login', [MobileAuthController::class, 'login']);
+        Route::post('/auth/login', [MobileAuthController::class, 'login'])->middleware('throttle:mobile-auth');
     });
 
     // ─── Protected (auth + tenant required) ────────────────────────
     Route::middleware([
         \App\Http\Middleware\IdentifyTenantFromHeader::class,
         'auth:sanctum',
+        'throttle:mobile-api',
     ])->group(function () {
 
         // Auth

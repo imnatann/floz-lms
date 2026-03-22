@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Tenant\User as TenantUser;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -13,7 +14,7 @@ class TenantAccess
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $tenant = app('currentTenant');
+        $tenant = app()->bound('currentTenant') ? app('currentTenant') : null;
 
         if (!$tenant) {
             abort(403, 'Akses tidak diizinkan. Tenant tidak teridentifikasi.');
@@ -22,12 +23,10 @@ class TenantAccess
         $user = $request->user();
 
         if (!$user) {
-            return redirect()->route('tenant.login');
+            return redirect()->route('login');
         }
 
-        // Verify user exists in the tenant database
-        // The user model uses tenant connection, so if we can retrieve it, they belong to this tenant
-        if ($user->connection !== 'tenant') {
+        if (! $user instanceof TenantUser) {
             abort(403, 'Akses tidak diizinkan untuk tenant ini.');
         }
 

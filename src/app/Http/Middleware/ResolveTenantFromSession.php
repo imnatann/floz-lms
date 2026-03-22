@@ -47,6 +47,7 @@ class ResolveTenantFromSession
         // Also update the auth model to use tenant User
         Config::set('auth.providers.users.model', \App\Models\Tenant\User::class);
         Auth::getProvider()->setModel(\App\Models\Tenant\User::class);
+        Auth::forgetGuards();
 
         // Bind tenant to the container
         app()->instance('currentTenant', $tenant);
