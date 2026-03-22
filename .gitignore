@@ -6,6 +6,8 @@ vendor/
 .DS_Store
 storage/logs/*
 !storage/logs/.gitkeep
-
-# Exclude Mobile App Repository
-floz_mobile/
+src/login_response.html
+floz_mobile/build_log.txt
+floz_mobile/build_log_final.txt
+floz_mobile/ios_old/
+floz_mobile/floz_mobile/
