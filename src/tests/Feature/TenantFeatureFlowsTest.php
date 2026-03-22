@@ -7,11 +7,13 @@ use App\Events\AnnouncementPosted;
 use App\Http\Middleware\IdentifyTenant;
 use App\Models\Central\Tenant;
 use App\Models\Tenant\User as TenantUser;
+use App\Services\PdfGeneratorService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Schema;
+use Mockery;
 use Tests\TestCase;
 
 class TenantFeatureFlowsTest extends TestCase
@@ -189,7 +191,11 @@ class TenantFeatureFlowsTest extends TestCase
             $table->unsignedBigInteger('class_id');
             $table->unsignedBigInteger('semester_id');
             $table->unsignedBigInteger('teacher_id');
+            $table->decimal('knowledge_score', 8, 2)->nullable();
+            $table->decimal('skill_score', 8, 2)->nullable();
             $table->decimal('final_score', 8, 2)->nullable();
+            $table->string('predicate')->nullable();
+            $table->text('description')->nullable();
             $table->timestamps();
         });
 
@@ -217,6 +223,47 @@ class TenantFeatureFlowsTest extends TestCase
             $table->string('status')->default('draft');
             $table->timestamp('published_at')->nullable();
             $table->string('pdf_url')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::connection('tenant')->create('offline_assignments', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('teacher_id');
+            $table->unsignedBigInteger('subject_id');
+            $table->unsignedBigInteger('meeting_id')->nullable();
+            $table->string('title');
+            $table->text('description');
+            $table->timestamp('due_date')->nullable();
+            $table->string('status')->default('active');
+            $table->string('type')->default('manual');
+            $table->unsignedBigInteger('created_by')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::connection('tenant')->create('offline_assignment_classes', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('offline_assignment_id');
+            $table->unsignedBigInteger('class_id');
+            $table->timestamps();
+        });
+
+        Schema::connection('tenant')->create('offline_assignment_files', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('offline_assignment_id');
+            $table->string('file_path');
+            $table->string('file_name');
+            $table->string('file_type')->nullable();
+            $table->unsignedBigInteger('file_size')->default(0);
+            $table->timestamps();
+        });
+
+        Schema::connection('tenant')->create('offline_assignment_submissions', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('offline_assignment_id');
+            $table->unsignedBigInteger('student_id');
+            $table->timestamp('submitted_at')->nullable();
+            $table->decimal('grade', 8, 2)->nullable();
+            $table->text('correction_note')->nullable();
             $table->timestamps();
         });
 
@@ -457,6 +504,262 @@ class TenantFeatureFlowsTest extends TestCase
         ], 'tenant');
     }
 
+    public function test_teacher_can_download_report_card_pdf(): void
+    {
+        $teacher = $this->makeTenantUser(UserRole::Teacher, 'pdfteacher@example.com');
+
+        $teacherId = DB::connection('tenant')->table('teachers')->insertGetId([
+            'name' => 'Teacher Pdf',
+            'email' => 'pdfteacher@example.com',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $classId = DB::connection('tenant')->table('classes')->insertGetId([
+            'name' => 'XII IPA 3',
+            'homeroom_teacher_id' => $teacherId,
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $semesterId = DB::connection('tenant')->table('semesters')->insertGetId([
+            'semester_number' => 1,
+            'start_date' => now()->startOfMonth()->toDateString(),
+            'end_date' => now()->endOfMonth()->toDateString(),
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $studentId = DB::connection('tenant')->table('students')->insertGetId([
+            'nis' => '2001',
+            'name' => 'Student Pdf',
+            'email' => 'studentpdf@example.com',
+            'class_id' => $classId,
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $reportCardId = DB::connection('tenant')->table('report_cards')->insertGetId([
+            'student_id' => $studentId,
+            'class_id' => $classId,
+            'semester_id' => $semesterId,
+            'average_score' => 92,
+            'total_score' => 92,
+            'status' => 'published',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $pdfPath = storage_path('app/testing/report-card-test.pdf');
+        if (! is_dir(dirname($pdfPath))) {
+            mkdir(dirname($pdfPath), 0755, true);
+        }
+        file_put_contents($pdfPath, 'pdf');
+
+        $pdfService = Mockery::mock(PdfGeneratorService::class);
+        $pdfService->shouldReceive('generateReportCardPdf')->once()->andReturn($pdfPath);
+        app()->instance(PdfGeneratorService::class, $pdfService);
+
+        $response = $this->tenantGet($teacher, "/tenant/report-cards/{$reportCardId}/pdf");
+
+        $response->assertOk();
+        $response->assertHeader('content-disposition');
+    }
+
+    public function test_teacher_can_create_assignment_for_class(): void
+    {
+        $teacherUser = $this->makeTenantUser(UserRole::Teacher, 'teachercreate@example.com');
+
+        $teacherId = DB::connection('tenant')->table('teachers')->insertGetId([
+            'name' => 'Teacher Create',
+            'email' => 'teachercreate@example.com',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $classId = DB::connection('tenant')->table('classes')->insertGetId([
+            'name' => 'XI IPS 1',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $subjectId = DB::connection('tenant')->table('subjects')->insertGetId([
+            'code' => 'SEJ',
+            'name' => 'Sejarah',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->tenantPost($teacherUser, '/tenant/assignments', [
+            'subject_id' => $subjectId,
+            'classes' => [$classId],
+            'title' => 'Esai Pergerakan Nasional',
+            'description' => 'Buat esai singkat.',
+            'due_date' => now()->addDays(3)->toDateString(),
+            'status' => 'active',
+            'type' => 'manual',
+        ]);
+
+        $response->assertRedirect('/tenant/assignments');
+
+        $this->assertDatabaseHas('offline_assignments', [
+            'teacher_id' => $teacherId,
+            'subject_id' => $subjectId,
+            'title' => 'Esai Pergerakan Nasional',
+            'type' => 'manual',
+        ], 'tenant');
+
+        $assignmentId = DB::connection('tenant')->table('offline_assignments')->value('id');
+
+        $this->assertDatabaseHas('offline_assignment_classes', [
+            'offline_assignment_id' => $assignmentId,
+            'class_id' => $classId,
+        ], 'tenant');
+    }
+
+    public function test_teacher_can_store_batch_grades_for_students(): void
+    {
+        $teacherUser = $this->makeTenantUser(UserRole::Teacher, 'teachergrade@example.com');
+
+        $teacherId = DB::connection('tenant')->table('teachers')->insertGetId([
+            'name' => 'Teacher Grade',
+            'email' => 'teachergrade@example.com',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $classId = DB::connection('tenant')->table('classes')->insertGetId([
+            'name' => 'X IPA 2',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $subjectId = DB::connection('tenant')->table('subjects')->insertGetId([
+            'code' => 'FIS',
+            'name' => 'Fisika',
+            'kkm' => 75,
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $semesterId = DB::connection('tenant')->table('semesters')->insertGetId([
+            'semester_number' => 1,
+            'start_date' => now()->startOfMonth()->toDateString(),
+            'end_date' => now()->endOfMonth()->toDateString(),
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $studentOneId = DB::connection('tenant')->table('students')->insertGetId([
+            'nis' => '3001',
+            'name' => 'Grade Student One',
+            'email' => 'gradestudent1@example.com',
+            'class_id' => $classId,
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $studentTwoId = DB::connection('tenant')->table('students')->insertGetId([
+            'nis' => '3002',
+            'name' => 'Grade Student Two',
+            'email' => 'gradestudent2@example.com',
+            'class_id' => $classId,
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->tenantPost($teacherUser, '/tenant/grades/batch', [
+            'class_id' => $classId,
+            'semester_id' => $semesterId,
+            'subject_id' => $subjectId,
+            'grades' => [
+                [
+                    'student_id' => $studentOneId,
+                    'knowledge_score' => 90,
+                    'skill_score' => 88,
+                ],
+                [
+                    'student_id' => $studentTwoId,
+                    'knowledge_score' => 78,
+                    'skill_score' => 80,
+                ],
+            ],
+        ]);
+
+        $response->assertRedirect("/tenant/grades?class_id={$classId}&semester_id={$semesterId}&subject_id={$subjectId}");
+
+        $this->assertDatabaseHas('grades', [
+            'student_id' => $studentOneId,
+            'subject_id' => $subjectId,
+            'semester_id' => $semesterId,
+        ], 'tenant');
+
+        $this->assertDatabaseHas('grades', [
+            'student_id' => $studentTwoId,
+            'subject_id' => $subjectId,
+            'semester_id' => $semesterId,
+        ], 'tenant');
+    }
+
+    public function test_school_admin_can_publish_report_card(): void
+    {
+        $admin = $this->makeTenantUser(UserRole::SchoolAdmin, 'publishadmin@example.com');
+
+        $classId = DB::connection('tenant')->table('classes')->insertGetId([
+            'name' => 'XI IPA Publish',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $semesterId = DB::connection('tenant')->table('semesters')->insertGetId([
+            'semester_number' => 1,
+            'start_date' => now()->startOfMonth()->toDateString(),
+            'end_date' => now()->endOfMonth()->toDateString(),
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $studentId = DB::connection('tenant')->table('students')->insertGetId([
+            'nis' => '4001',
+            'name' => 'Publish Student',
+            'email' => 'publishstudent@example.com',
+            'class_id' => $classId,
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $reportCardId = DB::connection('tenant')->table('report_cards')->insertGetId([
+            'student_id' => $studentId,
+            'class_id' => $classId,
+            'semester_id' => $semesterId,
+            'status' => 'draft',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->tenantPost($admin, "/tenant/report-cards/{$reportCardId}/publish", []);
+
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('report_cards', [
+            'id' => $reportCardId,
+            'status' => 'published',
+        ], 'tenant');
+    }
+
     private function makeTenantUser(UserRole $role, string $email): TenantUser
     {
         return TenantUser::query()->create([
@@ -487,5 +790,15 @@ class TenantFeatureFlowsTest extends TestCase
             ->from('/tenant/schedules')
             ->withServerVariables(['HTTP_HOST' => 'demo.localhost'])
             ->delete($uri);
+    }
+
+    private function tenantGet(TenantUser $user, string $uri)
+    {
+        app()->instance('currentTenant', $this->tenant);
+
+        return $this->withoutMiddleware(IdentifyTenant::class)
+            ->actingAs($user)
+            ->withServerVariables(['HTTP_HOST' => 'demo.localhost'])
+            ->get($uri);
     }
 }
